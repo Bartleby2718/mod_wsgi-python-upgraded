@@ -13,7 +13,6 @@ RUN export BUILD_PATH=/app; \
     export LD_RUN_PATH="$INSTALL_ROOT/python/lib:$INSTALL_ROOT/python/lib64/"; \
     export CONFIG_ARGS="--prefix=$INSTALL_ROOT/python --enable-optimizations --enable-shared --with-ensurepip=install --with-openssl=$SSL_PATH"; \
     export LDFLAGS="-L$INSTALL_ROOT/python/lib/ -L$INSTALL_ROOT/python/lib64/"; \
-    export LD_LIBRARY_PATH="$INSTALL_ROOT/python/lib/:$INSTALL_ROOT/python/lib64/:$BUILD_PATH/Python-$PYTHON_VERSION"; \
     export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH"; \
     # Install necessary packages in tp33/django
     apt-get update && \
@@ -28,15 +27,14 @@ RUN export BUILD_PATH=/app; \
     libbz2-dev \
     libsqlite3-dev \
     wget \
+    uuid-dev \
     libncurses5-dev \
     tk-dev \
     liblzma-dev \
-    libreadline-dev \
-    # uuid
-    uuid-dev \
     # Can't connect to HTTPS URL: https://stackoverflow.com/a/44758621
     libgdbm-dev \
-    libc6-dev && \
+    libc6-dev \
+    libreadline-dev && \
     # Install OpenSSL from source (https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux/)
     # apt-get install gives you OpenSSL 1.0.1, but Python 3.7 wants 1.0.2+
     cd $INSTALL_ROOT && \
@@ -68,9 +66,6 @@ RUN export BUILD_PATH=/app; \
     export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH && \
     ln -sf $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $(which python) && \
     ln -sf $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $(which pip) && \
-    pip install --upgrade pip && \ 
-    python --version && \ 
-    pip --version && \ 
     # Fixup permissions: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L254
     chgrp -R root $INSTALL_ROOT && \
     find $INSTALL_ROOT -type d -exec chmod g+ws {} && \
