@@ -12,6 +12,8 @@ RUN export BUILD_PATH=/app; \
     export SSL_PATH=$INSTALL_ROOT/openssl; \
     export LD_RUN_PATH="$INSTALL_ROOT/python/lib:$INSTALL_ROOT/python/lib64/"; \
     export CONFIG_ARGS="--prefix=$INSTALL_ROOT/python --enable-optimizations --enable-shared --with-ensurepip=install --with-openssl=$SSL_PATH"; \
+    export LDFLAGS="-L$INSTALL_ROOT/python/lib/ -L$INSTALL_ROOT/python/lib64/"; \
+    export LD_LIBRARY_PATH="$INSTALL_ROOT/python/lib/:$INSTALL_ROOT/python/lib64/:$BUILD_PATH/Python-$PYTHON_VERSION"; \
     export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH"; \
     # Install necessary packages in tp33/django
     apt-get update && \
@@ -64,10 +66,11 @@ RUN export BUILD_PATH=/app; \
     unset LD_RUN_PATH && \
     # Make python/pip point to the newly installed versions
     export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH && \
-    unlink /usr/local/python/bin/python && \
-    ln -s $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $INSTALL_ROOT/bin/python && \
-    ln -s $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $INSTALL_ROOT/bin/pip && \
+    ln -sf $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $(which python) && \
+    ln -sf $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $(which pip) && \
     pip install --upgrade pip && \ 
+    python --version && \ 
+    pip --version && \ 
     # Fixup permissions: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L254
     chgrp -R root $INSTALL_ROOT && \
     find $INSTALL_ROOT -type d -exec chmod g+ws {} && \
