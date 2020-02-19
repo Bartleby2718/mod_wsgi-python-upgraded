@@ -12,8 +12,8 @@ RUN export BUILD_PATH=/app; \
     export SSL_PATH=$INSTALL_ROOT/openssl; \
     export LD_RUN_PATH="$INSTALL_ROOT/python/lib:$INSTALL_ROOT/python/lib64/"; \
     export CONFIG_ARGS="--prefix=$INSTALL_ROOT/python --enable-optimizations --enable-shared --with-ensurepip=install --with-openssl=$SSL_PATH"; \
-    export LDFLAGS="-L$INSTALL_ROOT/python/lib/ -L$INSTALL_ROOT/python/lib64/"; \
-    export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH"; \
+    export LDFLAGS="-L$INSTALL_ROOT/python/lib/ -L$INSTALL_ROOT/python/lib64/" && \
+    export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH" && \
     # Install necessary packages in tp33/django
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -63,14 +63,14 @@ RUN export BUILD_PATH=/app; \
     # Clean up: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L158
     unset LD_RUN_PATH && \
     # Make python/pip point to the newly installed versions
-    export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH && \
+    export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH; \
     ln -sf $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $(which python) && \
-    ln -sf $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $(which pip) && \
-    # Fixup permissions: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L254
-    chgrp -R root $INSTALL_ROOT && \
-    find $INSTALL_ROOT -type d -exec chmod g+ws {} && \
-    find $INSTALL_ROOT -perm 2755 -exec chmod g+w {} && \
-    find $INSTALL_ROOT -perm 0644 -exec chmod g+w {}
+    ln -sf $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $(which pip)
+# # Fixup permissions: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L254
+# chgrp -R root $INSTALL_ROOT && \
+# find $INSTALL_ROOT -type d -exec chmod g+ws {} \; && \
+# find $INSTALL_ROOT -perm 2755 -exec chmod g+w {} \; && \
+# find $INSTALL_ROOT -perm 0644 -exec chmod g+w {} \;
 
 ENV LANG=en_US.UTF-8 PYTHONHASHSEED=random \
     PATH=/usr/local/bin/python$PYTHON_VERSION_MAJOR_MINOR:/usr/local/apache/bin:$PATH \
