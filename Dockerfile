@@ -2,8 +2,8 @@ FROM grahamdumpleton/mod-wsgi-docker:python-3.5
 # Also heavily based on https://hub.docker.com/r/tp33/django/dockerfile
 
 # Some customizable Environment variables
-ENV PYTHON_VERSION_MAJOR_MINOR=3.7 \
-    PYTHON_VERSION_PATCH=6 \
+ENV PYTHON_VERSION_MAJOR_MINOR=3.8 \
+    PYTHON_VERSION_PATCH=3 \
     OPENSSL_VERSION=1.1.0l \
     INSTALL_ROOT=/usr/local \
     MOD_WSGI_USER=www-data \
