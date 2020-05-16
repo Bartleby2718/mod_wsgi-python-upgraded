@@ -11,7 +11,7 @@ ENV PYTHON_VERSION_MAJOR_MINOR=3.7 \
     WORK_DIR=/app \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Another ENV directive to use the environment variables above
+# Another ENV instruction to use the environment variables above
 ENV PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH \
     SSL_PATH=$INSTALL_ROOT/openssl
 
@@ -25,17 +25,17 @@ RUN apt-get update && \
     # https://linuxize.com/post/how-to-install-python-3-7-on-debian-9/
     # Install more packages https://unix.stackexchange.com/a/332658
     build-essential \
-    zlib1g-dev \
     libbz2-dev \
-    libsqlite3-dev \
-    wget \
-    uuid-dev \
-    libncurses5-dev \
-    tk-dev \
     liblzma-dev \
+    libncurses5-dev \
+    libsqlite3-dev \
+    tk-dev \
+    uuid-dev \
+    wget \
+    zlib1g-dev \
     # Can't connect to HTTPS URL: https://stackoverflow.com/a/44758621
-    libgdbm-dev \
     libc6-dev \
+    libgdbm-dev \
     libreadline-dev
 
 # Download Python
@@ -56,9 +56,9 @@ RUN export CC=x86_64-linux-gnu-gcc && \
     make -j $nproc && \
     make install && \
     echo $SSL_PATH/lib >> /etc/ld.so.conf.d/openssl.conf && \
-    ldconfig -v
+    ldconfig
 
-# Build Python
+# Build Python from source
 RUN cd $WORK_DIR/Python-$PYTHON_VERSION && \
     export PATH=$SSL_PATH/bin:$PATH && \
     # --enable-optimizations doesn't work with old versions of GCC

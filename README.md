@@ -1,4 +1,4 @@
-# mod_wsgi-docker-upgraded
+# mod_wsgi-python-upgraded
 Upgrades the Python version of https://github.com/GrahamDumpleton/mod_wsgi-docker
 
 ### **Motivation**
@@ -25,11 +25,11 @@ checking for X509_VERIFY_PARAM_set1_host in libssl... yes
 ```
 5. Memory
   - I'm not sure if this helps, but allocating more resource to Docker or a VM might help. I didn't realize that I had allocated only 2GB to Docker Desktop.
-6. 
+6. Incremental commits
+  - Now that I have finished refactoring, I think I should have broken down `Dockerfile` into multiple modular instructions because it helps speeds up the build process by using the cached layers.
 
 ### Building OpenSSL from source
-- There is a very useful tutorial on HowtoForge: https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux.
-- Basically, it can be divided into a few steps:
+- There is a [very useful tutorial on HowtoForge](https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux). Basically, it can be divided into a few steps:
 0) Determine which version to download and temporarily set an environment variable. [Python 3.7 requires OpenSSL 1.0.2+](https://github.com/python/cpython/blob/43364a7ae01fbe4288ef42622259a0038ce1edcc/setup.py#L414), and it seems like [there was a small change in OpenSSL 1.1.0](https://wiki.openssl.org/index.php/Compilation_and_Installation).
 1) `cd` into the directory you want to download OpenSSL tar file.
 2) Use `wget` or `curl` to download the tar file.
@@ -39,4 +39,4 @@ checking for X509_VERIFY_PARAM_set1_host in libssl... yes
 6) Run `./openssl version -a` to check the version of the newly installed OpenSSL.
 Also, run `openssl version -a` if you have another OpenSSL installed already, just for comparison.
 7) Add a shared object configuration file for OpenSSL, and verify that it can now be used by a linker.
-8) Add the new OpenSSL binary to the path, so that the new OpenSSL executable is called whenever `openssl` is called.
+8) Add the new OpenSSL binary to `PATH`, so that the new OpenSSL executable is called whenever `openssl` is called.
