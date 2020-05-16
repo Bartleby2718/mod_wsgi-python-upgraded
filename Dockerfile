@@ -1,19 +1,25 @@
-# Heavily based on https://hub.docker.com/r/tp33/django/dockerfile
 FROM grahamdumpleton/mod-wsgi-docker:python-3.5
+# Also heavily based on https://hub.docker.com/r/tp33/django/dockerfile
 
-# Declare environment variables needed during the setup
-RUN export BUILD_PATH=/app; \
-    export PYTHON_VERSION_MAJOR_MINOR=3.7; \
-    export PYTHON_VERSION_PATCH=6; \
-    export PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH; \
-    export CC=x86_64-linux-gnu-gcc; \
+# Environment variables should be defined before RUN
+ENV PYTHON_VERSION_MAJOR_MINOR=3.7 \
+    PYTHON_VERSION_PATCH=6 \
+    WORK_DIR=/app
+
+# Need another ENV statement to use the environment variables above
+ENV PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH
+
+# Declare environment variables needed during the build
+RUN export CC=x86_64-linux-gnu-gcc; \
     export OPENSSL_VERSION=1.1.0l; \
     export INSTALL_ROOT=/usr/local; \
     export SSL_PATH=$INSTALL_ROOT/openssl; \
     export LD_RUN_PATH="$INSTALL_ROOT/python/lib:$INSTALL_ROOT/python/lib64/"; \
-    export CONFIG_ARGS="--prefix=$INSTALL_ROOT/python --enable-optimizations --enable-shared --with-ensurepip=install --with-openssl=$SSL_PATH"; \
+    # --enable-optimizations doesn't work with old versions of GCC
+    export CONFIG_ARGS="--prefix=$INSTALL_ROOT/python --enable-shared --with-ensurepip=install --with-openssl=$SSL_PATH"; \
     export LDFLAGS="-L$INSTALL_ROOT/python/lib/ -L$INSTALL_ROOT/python/lib64/" && \
     export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH" && \
+    ###########################################################################
     # Install necessary packages in tp33/django
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -35,7 +41,8 @@ RUN export BUILD_PATH=/app; \
     libgdbm-dev \
     libc6-dev \
     libreadline-dev && \
-    # Install OpenSSL from source (https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux/)
+    ###########################################################################
+    # Build OpenSSL from source (https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux/)
     # apt-get install gives you OpenSSL 1.0.1, but Python 3.7 wants 1.0.2+
     cd $INSTALL_ROOT && \
     wget "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" && \
@@ -46,14 +53,16 @@ RUN export BUILD_PATH=/app; \
     make install && \
     echo $SSL_PATH/lib >> /etc/ld.so.conf.d/openssl.conf && \
     ldconfig -v && \
-    ldconfig -v >> $BUILD_PATH/ldconfig.txt && \
-    openssl version -a &&  \
-    openssl version -a >> $BUILD_PATH/opensslb4.txt && \
+    ldconfig -v >> $WORK_DIR/ldconfig.txt && \
+    openssl version -a && \
+    openssl version -a >> $WORK_DIR/opensslb4.txt && \
+    # Add OpenSSL to PATH
     export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH && \
     openssl version -a && \
-    openssl version -a >> $BUILD_PATH/opensslafter.txt && \
-    # Install Python from source: https://unix.stackexchange.com/a/332658
-    cd $BUILD_PATH && \
+    openssl version -a >> $WORK_DIR/opensslafter.txt && \
+    ###########################################################################
+    # Build Python from source: https://unix.stackexchange.com/a/332658
+    cd $WORK_DIR && \
     wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz" && \
     tar -xvf Python-$PYTHON_VERSION.tgz && \
     cd Python-$PYTHON_VERSION && \
@@ -62,23 +71,28 @@ RUN export BUILD_PATH=/app; \
     make altinstall && \
     # Clean up: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L158
     unset LD_RUN_PATH && \
-    # Make python/pip point to the newly installed versions
+    rm -rf $WORK_DIR/* && \
     export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH; \
-    ln -sf $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $(which python) && \
-    ln -sf $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $(which pip)
-# # Fixup permissions: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L254
-# chgrp -R root $INSTALL_ROOT && \
-# find $INSTALL_ROOT -type d -exec chmod g+ws {} \; && \
-# find $INSTALL_ROOT -perm 2755 -exec chmod g+w {} \; && \
-# find $INSTALL_ROOT -perm 0644 -exec chmod g+w {} \;
+    unlink /usr/local/python/bin/python && \
+    unlink /usr/local/python/bin/pip && \
+    ln -s $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $INSTALL_ROOT/python/bin/python && \
+    ln -s $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $INSTALL_ROOT/python/bin/pip && \
+    ###########################################################################
+    # Create a group and give it the permission for the working directory
+    groupadd $MOD_WSGI_GROUP && \
+    usermod -a -G $MOD_WSGI_GROUP $MOD_WSGI_GROUP && \
+    chown -R $MOD_WSGI_USER:$MOD_WSGI_GROUP $WORK_DIR
 
-ENV LANG=en_US.UTF-8 PYTHONHASHSEED=random \
-    PATH=/usr/local/bin/python$PYTHON_VERSION_MAJOR_MINOR:/usr/local/apache/bin:$PATH \
-    MOD_WSGI_USER=www-data MOD_WSGI_GROUP=www-data \ 
-    # Environment variables are not supported by RUN, so need to specify again
-    PYTHON_VERSION_MAJOR_MINOR=3.7 \
-    PYTHON_VERSION_PATCH=6
-# Need a new ENV statement to user previously defined environment variables
-ENV	PYTHON_VERSION=${PYTHON_VERSION_MAJOR_MINOR}.${PYTHON_VERSION_PATCH}
+ENV LANG=en_US.UTF-8 \
+    PYTHONHASHSEED=random\
+    PATH=/usr/local/bin/python:/usr/local/apache/bin:/usr/local/python/bin:/usr/local/apache/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    MOD_WSGI_USER=www-data \
+    MOD_WSGI_GROUP=www-data
 
-WORKDIR /app
+RUN pip install Django==2.2.10 \
+    elasticsearch==7.0.5 \
+    kafka-python==1.4.7 \
+    mysqlclient==1.4.6 \
+    mod_wsgi==4.5.18
+
+WORKDIR $WORK_DIR
