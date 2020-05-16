@@ -5,6 +5,7 @@ FROM grahamdumpleton/mod-wsgi-docker:python-3.5
 ENV PYTHON_VERSION_MAJOR_MINOR=3.8 \
     PYTHON_VERSION_PATCH=3 \
     OPENSSL_VERSION=1.1.0l \
+    MOD_WSGI_VERSION=4.7.1 \
     INSTALL_ROOT=/usr/local \
     MOD_WSGI_USER=www-data \
     MOD_WSGI_GROUP=www-data \
@@ -86,6 +87,6 @@ RUN pip install Django==2.2.10 \
     elasticsearch==7.0.5 \
     kafka-python==1.4.7 \
     mysqlclient==1.4.6 \
-    mod_wsgi==4.5.18
+    mod_wsgi==$MOD_WSGI_VERSION
 
 WORKDIR $WORK_DIR
