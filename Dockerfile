@@ -3,7 +3,7 @@ FROM grahamdumpleton/mod-wsgi-docker:python-3.5
 
 # Some customizable Environment variables
 ENV PYTHON_VERSION_MAJOR_MINOR=3.7 \
-    PYTHON_VERSION_PATCH=6 \
+    PYTHON_VERSION_PATCH=7 \
     OPENSSL_VERSION=1.1.0l \
     INSTALL_ROOT=/usr/local \
     MOD_WSGI_USER=www-data \
