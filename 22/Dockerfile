@@ -1,24 +1,15 @@
 FROM grahamdumpleton/mod-wsgi-docker:python-3.5
-# Also heavily based on https://hub.docker.com/r/tp33/django/dockerfile
-
-# Environment variables should be defined before RUN
 ENV PYTHON_VERSION_MAJOR_MINOR=3.7 \
     PYTHON_VERSION_PATCH=6 \
     MOD_WSGI_USER=www-data \
     MOD_WSGI_GROUP=www-data \
     WORK_DIR=/app
-
-# Need another ENV statement to use the environment variables above
 ENV PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH
-
-# Install necessary packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
     libmysqlclient-dev \
     unattended-upgrades \
-    # https://linuxize.com/post/how-to-install-python-3-7-on-debian-9/
-    # Install more packages https://unix.stackexchange.com/a/332658
     build-essential \
     zlib1g-dev \
     libbz2-dev \
@@ -28,15 +19,12 @@ RUN apt-get update && \
     libncurses5-dev \
     tk-dev \
     liblzma-dev \
-    # Can't connect to HTTPS URL: https://stackoverflow.com/a/44758621
     libgdbm-dev \
     libc6-dev \
     libreadline-dev
-
 WORKDIR $WORK_DIR
 RUN wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz" && \
     tar -xvf Python-$PYTHON_VERSION.tgz
-
 RUN export CC=x86_64-linux-gnu-gcc; \
     export OPENSSL_VERSION=1.1.0l; \
     export INSTALL_ROOT=/usr/local; \
@@ -44,9 +32,6 @@ RUN export CC=x86_64-linux-gnu-gcc; \
     export LD_RUN_PATH="$INSTALL_ROOT/python/lib:$INSTALL_ROOT/python/lib64/"; \
     export LDFLAGS="-L$INSTALL_ROOT/python/lib/ -L$INSTALL_ROOT/python/lib64/" && \
     export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH" && \
-    ###########################################################################
-    # Build OpenSSL from source (https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux/)
-    # apt-get install gives you OpenSSL 1.0.1, but Python 3.7 wants 1.0.2+
     cd $INSTALL_ROOT && \
     wget "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" && \
     tar -xf openssl-$OPENSSL_VERSION.tar.gz && \
@@ -65,17 +50,12 @@ RUN export CC=x86_64-linux-gnu-gcc; \
     export PATH=$SSL_PATH/bin:$INSTALL_ROOT/python/bin:$PATH; \
     ln -sf $INSTALL_ROOT/python/bin/python$PYTHON_VERSION_MAJOR_MINOR $INSTALL_ROOT/python/bin/python && \
     ln -sf $INSTALL_ROOT/python/bin/pip$PYTHON_VERSION_MAJOR_MINOR $INSTALL_ROOT/python/bin/pip
-
-# Give mod_wsgi necessary permissions
 RUN usermod -a -G $MOD_WSGI_GROUP $MOD_WSGI_GROUP && \
     chown -R $MOD_WSGI_USER:$MOD_WSGI_GROUP $WORK_DIR
-
 RUN which python && python --version && which pip && pip --version
-
 RUN pip install Django==2.2.10 \
     elasticsearch==7.0.5 \
     kafka-python==1.4.7 \
     mysqlclient==1.4.6 \
     mod_wsgi==4.5.18
-
 WORKDIR $WORK_DIR
