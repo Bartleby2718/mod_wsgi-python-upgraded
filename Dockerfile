@@ -1,20 +1,19 @@
 FROM grahamdumpleton/mod-wsgi-docker:python-3.5
 # Also heavily based on https://hub.docker.com/r/tp33/django/dockerfile
 
-# Some customizable Environment variables
-ENV PYTHON_VERSION_MAJOR_MINOR=3.7 \
-    PYTHON_VERSION_PATCH=7 \
-    OPENSSL_VERSION=1.1.0l \
-    MOD_WSGI_VERSION=4.7.1 \
-    INSTALL_ROOT=/usr/local \
-    MOD_WSGI_USER=www-data \
-    MOD_WSGI_GROUP=www-data \
-    WORK_DIR=/app \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+# Some customizable environment variables with default values
+ARG PYTHON_VERSION_MAJOR_MINOR=3.7
+ARG PYTHON_VERSION_PATCH=7
+ARG OPENSSL_VERSION=1.1.0l
+ARG MOD_WSGI_VERSION=4.7.1 
+ARG INSTALL_ROOT=/usr/local 
+ARG MOD_WSGI_USER=www-data 
+ARG MOD_WSGI_GROUP=www-data 
+ARG WORK_DIR=/app
 
-# Another ENV instruction to use the environment variables above
 ENV PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH \
-    SSL_PATH=$INSTALL_ROOT/openssl
+    SSL_PATH=$INSTALL_ROOT/openssl \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install necessary packages
 RUN apt-get update && \
