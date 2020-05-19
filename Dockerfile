@@ -1,4 +1,4 @@
-FROM grahamdumpleton/mod-wsgi-docker:python-3.5
+FROM httpd
 # Also heavily based on https://hub.docker.com/r/tp33/django/dockerfile
 
 # Some customizable environment variables with default values
@@ -20,7 +20,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # tp33/django
     git \
-    libmysqlclient-dev \
+    default-libmysqlclient-dev \
     unattended-upgrades \
     # https://linuxize.com/post/how-to-install-python-3-7-on-debian-9/
     # Install more packages https://unix.stackexchange.com/a/332658
@@ -36,10 +36,15 @@ RUN apt-get update && \
     # Can't connect to HTTPS URL: https://stackoverflow.com/a/44758621
     libc6-dev \
     libgdbm-dev \
-    libreadline-dev
+    libreadline-dev \
+    # The certificate of ... doesn't have a known issuer. https://stackoverflow.com/a/27144445
+    ca-certificates \
+    # Cannot install mysqlclient https://stackoverflow.com/a/59389154
+    libffi-dev
 
 # Download Python
-RUN cd $WORK_DIR && \
+RUN mkdir $WORK_DIR && \
+    cd $WORK_DIR && \
     wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz" && \
     tar -xf Python-$PYTHON_VERSION.tgz
 
@@ -78,6 +83,10 @@ RUN rm -rf $WORK_DIR/* && \
 # Give mod_wsgi necessary permissions
 RUN usermod -a -G $MOD_WSGI_GROUP $MOD_WSGI_GROUP && \
     chown -R $MOD_WSGI_USER:$MOD_WSGI_GROUP $WORK_DIR
+
+ENV LANG=en_US.UTF-8 \
+    PYTHONHASHSEED=random \
+    PATH=$INSTALL_ROOT/python/bin:$PATH
 
 RUN which python && python --version && which pip && pip --version
 
