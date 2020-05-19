@@ -5,7 +5,7 @@ FROM httpd
 ARG PYTHON_VERSION_MAJOR_MINOR=3.7
 ARG PYTHON_VERSION_PATCH=7
 ARG OPENSSL_VERSION=1.1.0l
-ARG MOD_WSGI_VERSION_NEW=4.7.1 
+ARG MOD_WSGI_VERSION=4.7.1 
 ARG INSTALL_ROOT=/usr/local 
 ARG MOD_WSGI_USER=www-data 
 ARG MOD_WSGI_GROUP=www-data 
@@ -95,6 +95,6 @@ RUN pip install Django==2.2.10 \
     elasticsearch==7.0.5 \
     kafka-python==1.4.7 \
     mysqlclient==1.4.6 \
-    mod_wsgi==$MOD_WSGI_VERSION_NEW
+    mod_wsgi==$MOD_WSGI_VERSION
 
 WORKDIR $WORK_DIR
