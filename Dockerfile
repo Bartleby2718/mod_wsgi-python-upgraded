@@ -40,7 +40,8 @@ RUN apt-get update && \
     # The certificate of ... doesn't have a known issuer. https://stackoverflow.com/a/27144445
     ca-certificates \
     # Cannot install mysqlclient https://stackoverflow.com/a/59389154
-    libffi-dev
+    libffi-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Download Python
 RUN mkdir $WORK_DIR && \
@@ -60,6 +61,7 @@ RUN export CC=x86_64-linux-gnu-gcc && \
     ./config --prefix=$SSL_PATH --openssldir=$SSL_PATH shared zlib && \
     make -j $nproc && \
     make install && \
+    make clean && \
     echo $SSL_PATH/lib >> /etc/ld.so.conf.d/openssl.conf && \
     ldconfig
 
@@ -72,7 +74,8 @@ RUN cd $WORK_DIR/Python-$PYTHON_VERSION && \
     export LDFLAGS="-L$INSTALL_ROOT/python/lib -L$INSTALL_ROOT/python/lib64" && \
     export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH" && \
     make -j $nproc && \
-    make altinstall
+    make altinstall && \
+    make distclean
 
 # Clean up
 RUN rm -rf $WORK_DIR/* && \
