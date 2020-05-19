@@ -4,7 +4,6 @@ FROM httpd
 # Some customizable environment variables with default values
 ARG PYTHON_VERSION_MAJOR_MINOR=3.7
 ARG PYTHON_VERSION_PATCH=7
-ARG OPENSSL_VERSION=1.1.0l
 ARG MOD_WSGI_VERSION=4.7.1 
 ARG INSTALL_ROOT=/usr/local 
 ARG MOD_WSGI_USER=www-data 
@@ -12,12 +11,14 @@ ARG MOD_WSGI_GROUP=www-data
 ARG WORK_DIR=/app
 
 ENV PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH \
-    SSL_PATH=$INSTALL_ROOT/openssl \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install necessary packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    # OpenSSL
+    openssl \
+    libssl-dev \
     # tp33/django
     git \
     default-libmysqlclient-dev \
@@ -49,30 +50,12 @@ RUN mkdir $WORK_DIR && \
     wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz" && \
     tar -xf Python-$PYTHON_VERSION.tgz
 
-# Download OpenSSL
-RUN cd $INSTALL_ROOT && \
-    wget "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" && \
-    tar -xf openssl-$OPENSSL_VERSION.tar.gz
-
-# Build OpenSSL from source (https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux/)
-# apt-get install gives you OpenSSL 1.0.1, but Python 3.7 wants 1.0.2+
-RUN export CC=x86_64-linux-gnu-gcc && \
-    cd $SSL_PATH-$OPENSSL_VERSION && \
-    ./config --prefix=$SSL_PATH --openssldir=$SSL_PATH shared zlib && \
-    make -j $nproc && \
-    make install && \
-    make clean && \
-    echo $SSL_PATH/lib >> /etc/ld.so.conf.d/openssl.conf && \
-    ldconfig
-
 # Build Python from source
 RUN cd $WORK_DIR/Python-$PYTHON_VERSION && \
-    export PATH=$SSL_PATH/bin:$PATH && \
-    # --enable-optimizations doesn't work with old versions of GCC
-    ./configure --prefix=$INSTALL_ROOT/python --enable-shared --with-ensurepip=install --with-openssl=$SSL_PATH && \ 
+    ./configure --prefix=$INSTALL_ROOT/python --enable-shared --with-ensurepip=install --enable-optimizations && \ 
     export LD_RUN_PATH="$INSTALL_ROOT/python/lib:$INSTALL_ROOT/python/lib64" && \
     export LDFLAGS="-L$INSTALL_ROOT/python/lib -L$INSTALL_ROOT/python/lib64" && \
-    export CPPFLAGS="-I$INSTALL_ROOT/python/include -I$SSL_PATH" && \
+    export CPPFLAGS="-I$INSTALL_ROOT/python/include -I/usr/include" && \
     make -j $nproc && \
     make altinstall && \
     make distclean
