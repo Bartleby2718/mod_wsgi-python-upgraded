@@ -15,6 +15,7 @@ ENV PYTHON_VERSION=$PYTHON_VERSION_MAJOR_MINOR.$PYTHON_VERSION_PATCH \
 # Install necessary packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    locales \
     # OpenSSL
     openssl \
     libssl-dev \
@@ -40,7 +41,12 @@ RUN apt-get update && \
     # The certificate of ... doesn't have a known issuer. https://stackoverflow.com/a/27144445
     ca-certificates \
     # Cannot install mysqlclient https://stackoverflow.com/a/59389154
-    libffi-dev && \
+    libffi-dev \
+    # Add locale: https://github.com/GrahamDumpleton/mod_wsgi-docker/blob/master/3.5/setup.sh#L28
+    locales && \
+    echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
+    locale-gen && \
+    # Remove unnecessary files
     rm -rf /var/lib/apt/lists/* && \
     # Download Python
     mkdir $WORK_DIR && \
@@ -69,7 +75,7 @@ ENV LANG=en_US.UTF-8 \
     PYTHONHASHSEED=random \
     PATH=$INSTALL_ROOT/python/bin:$PATH
 
-# Check version in a new instruction: https://stackoverflow.com/a/56763739/4370146
+# Check version in a new instruction: https://stackoverflow.com/a/56763739
 RUN which python; python --version; which pip; pip --version; \
     # Install Python packages
     pip install \
