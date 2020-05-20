@@ -1,16 +1,18 @@
 # mod_wsgi-python-upgraded
-Upgrades the Python version of https://github.com/GrahamDumpleton/mod_wsgi-docker
+- Run your Django server with `mod_wsgi-express start-server` on Debian 10 using Python 3.6+!
+- The Docker image can be found [here](https://hub.docker.com/repository/docker/bartleby2718/mod_wsgi-python-upgraded/tags). Choose the Python version you want.
 
 ### **Motivation**
-I really wanted to use Python 3.6+ because of [f-strings in Python 3.6](https://www.python.org/dev/peps/pep-0498/) and [`breakpoint()` in Python 3.7](https://www.python.org/dev/peps/pep-0553/). However, [mod_wsgi-docker](https://github.com/GrahamDumpleton/mod_wsgi-docker), which supported up to Python 3.5.4, is no longer being maintained. As such, I looked at [Graham Dumpleton's original mod_wsgi-docker repository](https://github.com/GrahamDumpleton/mod_wsgi-docker) and [Professor Pinckney's Dockerfile](https://github.com/thomaspinckney3/django-docker/blob/master/Dockerfile) to upgrade Python version.
+I really wanted to use Python 3.6+ for a school project because of [f-strings in Python 3.6](https://www.python.org/dev/peps/pep-0498/) and [`breakpoint()` in Python 3.7](https://www.python.org/dev/peps/pep-0553/). However, [mod_wsgi-docker](https://github.com/GrahamDumpleton/mod_wsgi-docker), which supported up to Python 3.5.4, is no longer being maintained. As such, I looked at [Graham Dumpleton's original mod_wsgi-docker repository](https://github.com/GrahamDumpleton/mod_wsgi-docker) and [Professor Pinckney's Dockerfile](https://github.com/thomaspinckney3/django-docker/blob/master/Dockerfile) to upgrade Python version. After the project was over, I have refactored the `Dockerfile` so that the image is only 6% bigger than the [original image](https://hub.docker.com/r/grahamdumpleton/mod-wsgi-docker) by @GrahamDumpleton. Mine is now based on Debian 10 `buster` (instead of Debian 8 `jessie`) and significantly easier to understand as it extends the [official Apache httpd image](https://hub.docker.com/_/httpd). Huge thanks to @GrahamDumpleton!
 
 ### **Note**
-- The `Dockerfile` is a superset of what was required to install Python 3.7.6 on Debian 8 (Jessie). I don't exactly know which of these would form a minimal set, but at least it works for me now.
--  You can modify `PYTHON_VERSION_MAJOR_MINOR` and `PYTHON_VERSION_PATCH` to suit your need. Note that you have to change them twice (in `RUN` command and in `ENV` command).
+- The `Dockerfile` is likely a superset of what was required to build Python 3.6+. I don't exactly know which of these would form a minimal set, but at least it works for me now.
+-  You can modify `PYTHON_VERSION_MAJOR_MINOR`, `PYTHON_VERSION_PATCH`, and `MOD_WSGI_VERSION` to suit your need using the [`--build-arg`](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg) option when you build this `Dockerfile`.
 
 ### **Tips, Tricks, and Troubleshooting**
+Some of the remarks below are no longer relevant, but I'll keep it as it can be of help to someone.
 1. Output redirection
-  - Because the standard output is extremely long, I recommend redirecting the output to a text file, naming them with numbers, problems, and attempted solutions. This will help you go back to previous output and compare the differences.
+  - Because the standard output of `docker build` is extremely long, I recommend redirecting the output to a text file, starting with indices and a short description of the problem or an attempted solution. This will help you go back to previous output and compare the differences.
 2. `make` after `./configure`
   - Python `make` takes a very long time (50 minutes on my machine). Make sure your `./configure` (or OpenSSL `./config`) returns correct output before getting started on `make`.
 3. `libreadline-gplv2-dev : Conflicts: libreadline-dev but 6.3-8+b3 is to be installed`
@@ -26,7 +28,10 @@ checking for X509_VERIFY_PARAM_set1_host in libssl... yes
 5. Memory
   - I'm not sure if this helps, but allocating more resource to Docker or a VM might help. I didn't realize that I had allocated only 2GB to Docker Desktop.
 6. Incremental commits
+  - Now that I have finished refactoring, I think I should have broken down `Dockerfile` into multiple modular instructions because it helps speeds up the build and debugging process by using the cached layers. Once you're all done, you can concatenate them back.
   - Now that I have finished refactoring, I think I should have broken down `Dockerfile` into multiple modular instructions because it helps speeds up the build process by using the cached layers.
+7. `--enable-optimizations`
+  - With this flag, it takes longer to build but yields a significant speed boost, according to [this StackOverflow answer](https://stackoverflow.com/questions/41405728/what-does-enable-optimizations-do-while-compiling-python). A caveat is that this does not work with old versions of GCC. Before refactoring, I had to take out the flag because Debian 8 `jessie` has GCC 4.9 by default.
 
 ### Building OpenSSL from source
 - There is a [very useful tutorial on HowtoForge](https://www.howtoforge.com/tutorial/how-to-install-openssl-from-source-on-linux). Basically, it can be divided into a few steps:

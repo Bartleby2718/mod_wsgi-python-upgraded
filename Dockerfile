@@ -1,5 +1,4 @@
 FROM httpd:2.4
-# Also heavily based on https://hub.docker.com/r/tp33/django/dockerfile
 
 # Some customizable environment variables with default values
 ARG PYTHON_VERSION_MAJOR_MINOR=3.7
